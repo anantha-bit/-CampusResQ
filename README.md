@@ -1,90 +1,126 @@
-# CampusResQ 🚨
+# 🚨 CampusResQ
 
 ## Campus Emergency Response System
 
-CampusResQ is a web-based emergency response management system designed to help educational institutions **report, monitor, and manage campus emergencies efficiently**.
+CampusResQ is a web-based **Campus Emergency Response System** designed to help educational institutions report, monitor, manage, and analyze emergency incidents efficiently.
 
-The system provides a centralized dashboard where administrators can track emergency incidents, manage response resources, view campus locations, update emergency statuses, and analyze incident data.
+The system provides administrators with a centralized platform to manage campus emergencies, track their response status, view registered campus locations, monitor available emergency resources, and analyze emergency statistics.
 
 ---
 
-## 📌 Features
+# 📌 Table of Contents
 
-### 🚨 Emergency Reporting
-- Report new campus emergencies.
-- Select emergency type:
-  - Medical
-  - Fire
-  - Security
-  - Other
-- Set emergency priority:
-  - HIGH
-  - MEDIUM
-  - CRITICAL
-- Specify:
-  - Building
-  - Floor
-  - Room / Location
-  - Description
-- Validates whether the entered location exists in the campus database.
+- [Overview](#-overview)
+- [Objectives](#-objectives)
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [System Architecture](#-system-architecture)
+- [Project Structure](#-project-structure)
+- [Application Pages](#-application-pages)
+- [Database](#-database)
+- [Database Tables](#-database-tables)
+- [Emergency Workflow](#-emergency-workflow)
+- [API Endpoints](#-api-endpoints)
+- [Installation](#-installation)
+- [Running the Application](#-running-the-application)
+- [Using the System](#-using-the-system)
+- [Validation](#-validation)
+- [Security](#-security)
+- [Future Improvements](#-future-improvements)
+- [Author](#-author)
+- [License](#-license)
 
-### 📊 Emergency Dashboard
-The dashboard provides an overview of campus emergency activity.
+---
 
-It displays:
+# 🔎 Overview
 
-- Total incidents
-- Active incidents
-- Incidents in progress
-- Resolved incidents
-- Recent emergency reports
-- Emergency priority
-- Emergency location
-- Reported user
-- Emergency description
+CampusResQ provides a centralized emergency management platform for a college or university campus.
 
-### 🔄 Emergency Status Management
+Instead of handling emergency reports manually, administrators can use CampusResQ to:
 
-Administrators can update emergency statuses:
+- Report emergencies
+- Record emergency locations
+- Assign emergency priorities
+- Track response progress
+- Mark emergencies as resolved
+- View available emergency resources
+- View registered campus locations
+- Analyze emergency statistics
+
+The system uses **Next.js and TypeScript** for the web application and **MySQL** for persistent data storage.
+
+---
+
+# 🎯 Objectives
+
+The main objectives of CampusResQ are:
+
+1. Provide a centralized emergency reporting system.
+2. Reduce the time required to report campus emergencies.
+3. Maintain accurate campus location information.
+4. Allow administrators to monitor emergency incidents.
+5. Track emergency response progress.
+6. Maintain information about emergency response resources.
+7. Provide emergency statistics and analytics.
+8. Improve coordination during campus emergencies.
+9. Maintain a structured database of emergency incidents.
+10. Provide a simple and user-friendly administrative dashboard.
+
+---
+
+# 🚨 Features
+
+## 1. Emergency Reporting
+
+Administrators/users can report a new emergency through the emergency reporting form.
+
+The form contains:
+
+- Emergency Type
+- Priority
+- Building
+- Floor
+- Room / Location
+- Description
+
+### Emergency Types
+
+The system supports emergency categories such as:
+
+- Medical
+- Fire
+- Security
+- Other
+
+### Priority Levels
+
+Emergencies can be assigned different priority levels:
+
+- HIGH
+- MEDIUM
+- CRITICAL
+
+---
+
+# 📍 Location Validation
+
+CampusResQ validates the location entered during emergency reporting.
+
+An emergency can only be reported using a **registered campus location**.
+
+For example, registered locations include:
+
+| Location ID | Building | Floor | Room / Area |
+|---|---|---|---|
+| 1 | Block A | Ground Floor | Main Entrance |
+| 2 | Block A | 2nd Floor | Room 204 |
+| 3 | Block B | 1st Floor | Computer Lab |
+| 4 | Library | Ground Floor | Reading Hall |
+| 5 | Sports Complex | Ground Floor | Football Ground |
+| 6 | Block A | 2nd Floor | Room 305 |
+
+If a user enters a location that does not exist, the system displays:
 
 ```text
-ACTIVE
-   ↓
-IN PROGRESS
-   ↓
-RESOLVEDThis is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This location does not exist.
+Please use a registered campus location.
