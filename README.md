@@ -1,4 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CampusResQ 🚨
+
+## Campus Emergency Response System
+
+CampusResQ is a web-based emergency response management system designed to help educational institutions **report, monitor, and manage campus emergencies efficiently**.
+
+The system provides a centralized dashboard where administrators can track emergency incidents, manage response resources, view campus locations, update emergency statuses, and analyze incident data.
+
+---
+
+## 📌 Features
+
+### 🚨 Emergency Reporting
+- Report new campus emergencies.
+- Select emergency type:
+  - Medical
+  - Fire
+  - Security
+  - Other
+- Set emergency priority:
+  - HIGH
+  - MEDIUM
+  - CRITICAL
+- Specify:
+  - Building
+  - Floor
+  - Room / Location
+  - Description
+- Validates whether the entered location exists in the campus database.
+
+### 📊 Emergency Dashboard
+The dashboard provides an overview of campus emergency activity.
+
+It displays:
+
+- Total incidents
+- Active incidents
+- Incidents in progress
+- Resolved incidents
+- Recent emergency reports
+- Emergency priority
+- Emergency location
+- Reported user
+- Emergency description
+
+### 🔄 Emergency Status Management
+
+Administrators can update emergency statuses:
+
+```text
+ACTIVE
+   ↓
+IN PROGRESS
+   ↓
+RESOLVEDThis is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
