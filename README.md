@@ -1,889 +1,447 @@
-# 🚨 CampusResQ
+# CampusResQ — Campus Emergency Response Management System
 
-CampusResQ is a campus emergency management system designed to help
-users report emergencies and allow administrators to monitor, manage,
-and analyze emergency incidents and response resources.
+CampusResQ is a web-based campus emergency response management system designed to help students report emergencies, enable responders to update incident statuses, and provide administrators with an overview of campus emergency activities.
 
-## ✨ Features
+The project combines a Next.js web application with MySQL for structured relational data and MongoDB for incident logging and status-based analysis.
 
--   Emergency reporting and management
--   Emergency status tracking
--   Search and filtering by status and priority
--   Campus location management
--   Emergency resource management
--   Reports and analytics dashboard
--   MySQL database integration
--   REST API routes through Next.js
--   Emergency workflow from reporting to resolution
+---
 
-## 🚦 Emergency Status
+## 1. Project Objectives
 
-CampusResQ uses three emergency statuses:
+- Provide a centralized platform for reporting campus emergencies.
+- Store emergency, user, location, and resource information reliably.
+- Allow authorized responders to update emergency statuses.
+- Enforce role-based access control.
+- Maintain incident logs in MongoDB.
+- Display emergency statistics and reports through a dashboard.
+- Demonstrate relational database design, advanced SQL operations, and NoSQL data processing.
 
-  -----------------------------------------------------------------------
-  Status                              Description
-  ----------------------------------- -----------------------------------
-  `ACTIVE`                            The emergency has been reported but
-                                      response action has not yet
-                                      started.
+---
 
-  `IN PROGRESS`                       A response team has started
-                                      handling the emergency.
+## 2. Key Features
 
-  `RESOLVED`                          The emergency has been successfully
-                                      handled.
-  -----------------------------------------------------------------------
+### Emergency Reporting
+- Submit an emergency report.
+- Select the emergency type, priority, and location.
+- Add a description of the incident.
+- Store emergency information in MySQL.
+- Create an associated incident log in MongoDB.
 
-The dashboard automatically updates the number of incidents in each
-status.
+### Emergency Management
+- View reported emergencies.
+- View emergency details and locations.
+- Track incident statuses.
+- Allow authorized responders to update statuses.
 
-## 🔍 Emergency Search & Filtering
+### Authentication and Authorization
+The application supports three roles:
 
-Emergency reports can be searched using keywords and filtered by:
+| Role | Main responsibility |
+|---|---|
+| USER | Report emergencies and access permitted features |
+| RESPONDER | View emergencies and update their statuses |
+| ADMIN | Perform administrative operations and manage permitted emergency updates |
 
-### Status
+Authentication uses password verification and a signed JWT stored in an HTTP-only cookie. API routes enforce authentication and role-based authorization.
 
--   All Statuses
--   `ACTIVE`
--   `IN PROGRESS`
--   `RESOLVED`
+### Dashboard and Reports
+- View emergency statistics.
+- Review recent emergency reports.
+- View emergency status summaries.
+- Explore available resource and location information.
 
-### Priority
+---
 
--   All Priorities
--   `HIGH`
--   `MEDIUM`
--   `CRITICAL`
+## 3. Technology Stack
 
-This helps administrators quickly identify important emergency reports.
+| Component | Technology |
+|---|---|
+| Frontend | Next.js, React, TypeScript |
+| Backend | Next.js API Routes |
+| Relational database | MySQL |
+| NoSQL database | MongoDB |
+| Database connectivity | mysql2 and MongoDB Node.js driver |
+| Authentication | JWT and bcrypt |
+| Version control | Git and GitHub |
 
-## 🧰 Resource Management
+---
 
-The **Resources** section manages emergency response resources available
-on campus.
+## 4. System Architecture
 
-Example resources:
+The application follows a web application architecture.
 
-    Resource ID Resource            Type              Quantity
-  ------------- ------------------- --------------- ----------
-              1 First Aid Kit       Medical                 17
-              2 Fire Extinguisher   Fire Safety             15
-              3 Wheelchair          Medical                  5
-              4 Stretcher           Medical                  3
-              5 Emergency Radio     Communication           10
+1. The user interacts with the Next.js interface.
+2. The interface sends requests to the Next.js API routes.
+3. Authentication and authorization checks are performed where required.
+4. MySQL stores structured application data.
+5. MongoDB stores incident logs and supports document-based analysis.
+6. The frontend displays the results returned by the API.
 
-The Resources page displays:
+### Database responsibilities
 
--   Resource name
--   Resource type
--   Available quantity
--   Resource ID
--   Total resources
--   Medical resources
--   Fire Safety resources
+**MySQL**
+- Users and roles
+- Campus locations
+- Emergencies
+- Responders
+- Assignments
+- Resources
+- Resource requests
 
-## 📍 Campus Locations
+**MongoDB**
+- Incident reports and associated status information
+- Status-based aggregation and analysis
+- Indexed retrieval of incident documents
 
-The **Locations** section contains registered emergency response
-locations.
+MySQL is used for relational integrity and structured transactions. MongoDB provides a document-oriented approach to incident logging and analysis.
 
-Each location includes:
+---
 
--   Location ID
--   Building
--   Floor
--   Room / Area
+## 5. MySQL Database Design
 
-Example locations:
+The database is named:
 
-    Location ID Building         Floor          Room / Area
-  ------------- ---------------- -------------- -----------------
-              1 Block A          Ground Floor   Main Entrance
-              2 Block A          2nd Floor      Room 204
-              3 Block B          1st Floor      Computer Lab
-              4 Library          Ground Floor   Reading Hall
-              5 Sports Complex   Ground Floor   Football Ground
-              6 Block A          2nd Floor      Room 305
+`campusresq_db`
 
-Emergency reports can only be submitted using registered campus
-locations.
+The application contains the following principal tables:
 
-## 📈 Reports & Analytics
+| Table | Purpose |
+|---|---|
+| `users` | Stores user information |
+| `roles` | Stores role definitions |
+| `locations` | Stores campus location information |
+| `emergencies` | Stores emergency reports and statuses |
+| `responders` | Stores responder information |
+| `assignments` | Associates emergencies with responders |
+| `resources` | Stores available resources |
+| `resource_requests` | Stores requests for resources |
 
-The Reports & Analytics section provides:
+### Relationships
 
--   Response Overview
--   Emergencies by Type
--   Emergencies by Priority
+- Users are associated with roles.
+- Emergencies reference the user who reported them.
+- Emergencies reference campus locations.
+- Responders reference users.
+- Assignments connect emergencies and responders.
+- Resource requests reference emergencies and resources.
 
-Example response overview:
+Primary keys, foreign keys, and other constraints help maintain relational integrity.
 
-``` text
-Active       → 20%
-In Progress  → 40%
-Resolved     → 40%
-```
+### Emergency statuses
 
-Example emergency types:
+The emergency lifecycle supports the following statuses:
 
-``` text
-Medical   → 3
-Fire      → 1
-Security  → 1
-```
+- `ACTIVE`
+- `IN_PROGRESS`
+- `RESOLVED`
+- `CANCELLED`
 
-Example priorities:
+### Emergency priorities
 
-``` text
-HIGH      → 3
-CRITICAL  → 1
-MEDIUM    → 1
-```
+The supported priority levels are:
 
-## 🖥️ Technology Stack
+- `LOW`
+- `MEDIUM`
+- `HIGH`
+- `CRITICAL`
 
-### Frontend
+---
 
--   Next.js
--   React
--   TypeScript
--   CSS
+## 6. Advanced SQL Concepts
 
-### Backend
+The project demonstrates several SQL concepts beyond basic CRUD operations.
 
--   Next.js API Routes
--   TypeScript
+### Primary and Foreign Keys
+Primary keys uniquely identify records. Foreign keys establish relationships between tables.
 
-### Database
+### Constraints
+Column definitions and constraints restrict invalid data and maintain consistency.
 
--   MySQL
+### Indexing
+Indexes support retrieval and filtering on selected columns, including emergency status, priority, and creation time.
 
-### Development Tools
+### Views
+The `emergency_details` view combines emergency information with related details for convenient querying.
 
--   Visual Studio Code
--   Node.js
--   npm
--   Git
--   GitHub
+### Stored Procedure
+The `get_emergencies_by_status` procedure retrieves emergencies for a specified status.
 
-## 🏗️ System Architecture
+### User-Defined Function
+The `count_active_emergencies()` function calculates the number of active emergencies.
 
-``` text
-                 ┌─────────────────────┐
-                 │      User/Admin     │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │     Next.js UI      │
-                 │  React + TypeScript │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │     API Routes      │
-                 │       Next.js       │
-                 └──────────┬──────────┘
-                            │
-                            ▼
-                 ┌─────────────────────┐
-                 │    MySQL Database   │
-                 │    campusresq_db    │
-                 └─────────────────────┘
-```
+### Trigger
+The `before_emergency_update` trigger runs before an emergency record is updated.
 
-## 📁 Project Structure
+### Transactions
+Transactions demonstrate how database changes can be committed or rolled back.
 
-``` text
+### SQL Operations
+The project uses:
+- DDL: `CREATE`, `ALTER`, `DROP`
+- DML: `INSERT`, `UPDATE`, `DELETE`
+- Queries: `SELECT`, joins, filtering, sorting, and aggregation
+- Grouping: `GROUP BY` and `HAVING`
+- Subqueries and aggregate functions
+
+---
+
+## 7. MongoDB Implementation
+
+The MongoDB database is named:
+
+`campusresq`
+
+The incident collection is:
+
+`incident_reports`
+
+MongoDB is used for document-oriented incident logging and analysis.
+
+### Indexes
+
+The collection includes:
+- The default `_id` index
+- An index on `status`
+- An index on `emergency_id`
+
+### Aggregation
+
+The aggregation pipeline groups incident documents by status and calculates the number of documents in each group.
+
+This demonstrates the use of MongoDB aggregation operators such as `$group`, `$sum`, and `$sort`.
+
+### MySQL and MongoDB integration
+
+Emergency reporting stores the primary emergency record in MySQL and attempts to create a corresponding incident log in MongoDB.
+
+When an authorized responder or administrator updates an emergency status, the API updates MySQL and attempts to synchronize the associated MongoDB document.
+
+The application reports the result of MongoDB synchronization separately. This is not a distributed atomic transaction, so synchronization failures must be handled explicitly.
+
+---
+
+## 8. Project Structure
+
+The principal project files and directories include:
+
+```text
 CampusResQ/
-│
 ├── app/
 │   ├── api/
+│   │   ├── auth/
 │   │   ├── emergencies/
-│   │   │   └── route.ts
+│   │   ├── incident-logs/
 │   │   ├── locations/
-│   │   │   └── route.ts
-│   │   ├── resources/
-│   │   │   └── route.ts
-│   │   └── test-db/
-│   │       └── route.ts
-│   │
+│   │   ├── mongo-test/
+│   │   └── resources/
 │   ├── emergency-reports/
-│   │   └── page.tsx
-│   ├── locations/
-│   │   └── page.tsx
+│   ├── login/
+│   ├── report-emergency/
 │   ├── reports/
-│   │   └── page.tsx
 │   ├── resources/
-│   │   └── page.tsx
-│   ├── globals.css
-│   ├── layout.tsx
 │   └── page.tsx
-│
 ├── lib/
-│   └── db.ts
-│
+│   ├── auth.ts
+│   ├── db.ts
+│   └── mongodb.ts
 ├── public/
+├── .env.example
+├── .gitignore
 ├── package.json
 ├── package-lock.json
 ├── next.config.ts
-├── tsconfig.json
-├── eslint.config.mjs
-├── postcss.config.mjs
 └── README.md
 ```
 
-## 🗄️ Database
+The exact contents may evolve as the project is developed.
 
-CampusResQ uses **MySQL**.
+---
 
-Database name:
+## 9. Prerequisites
 
-``` text
-campusresq_db
-```
+Install the following before running the project:
 
-### Database Tables
+- Node.js and npm
+- MySQL Server
+- MongoDB Server
+- Git
 
-``` text
-assignments
-emergencies
-emergency_details
-locations
-resource_requests
-resources
-responders
-roles
-users
-```
+You will also need the project source code and a configured MySQL database.
 
-### Emergencies Table
+---
 
-The `emergencies` table stores reported emergency incidents.
+## 10. Installation and Setup
 
-Important information includes:
+### Step 1: Clone the repository
 
--   Emergency ID
--   Reported By
--   Location ID
--   Emergency Type
--   Priority
--   Description
--   Status
--   Created At
-
-New emergencies are initially stored with:
-
-``` text
-ACTIVE
-```
-
-### Locations Table
-
-The `locations` table stores registered campus locations.
-
-Example:
-
-``` text
-Location ID: 1
-Building: Block A
-Floor: Ground Floor
-Room: Main Entrance
-```
-
-### Resources Table
-
-The `resources` table stores emergency response resources.
-
-Examples:
-
-``` text
-First Aid Kit
-Type: Medical
-Quantity: 17
-```
-
-``` text
-Fire Extinguisher
-Type: Fire Safety
-Quantity: 15
-```
-
-``` text
-Wheelchair
-Type: Medical
-Quantity: 5
-```
-
-``` text
-Stretcher
-Type: Medical
-Quantity: 3
-```
-
-``` text
-Emergency Radio
-Type: Communication
-Quantity: 10
-```
-
-## 🔄 Emergency Workflow
-
-``` text
-1. User opens CampusResQ
-        │
-        ▼
-2. Selects "Report Emergency"
-        │
-        ▼
-3. Enters emergency details
-        │
-        ▼
-4. System validates location
-        │
-        ▼
-5. Emergency is stored in MySQL
-        │
-        ▼
-6. Status = ACTIVE
-        │
-        ▼
-7. Administrator reviews incident
-        │
-        ▼
-8. Response is started
-        │
-        ▼
-9. Status = IN PROGRESS
-        │
-        ▼
-10. Emergency is handled
-        │
-        ▼
-11. Status = RESOLVED
-```
-
-## 🔌 API Endpoints
-
-### Emergencies
-
-#### GET
-
-``` http
-GET /api/emergencies
-```
-
-Returns all emergency reports.
-
-Example response:
-
-``` json
-{
-  "success": true,
-  "emergencies": []
-}
-```
-
-#### POST
-
-``` http
-POST /api/emergencies
-```
-
-Creates a new emergency report.
-
-Example request:
-
-``` json
-{
-  "reported_by": 1,
-  "location_id": 6,
-  "emergency_type": "Medical",
-  "priority": "HIGH",
-  "description": "Student requires medical assistance"
-}
-```
-
-The new emergency is stored with:
-
-``` text
-status = ACTIVE
-```
-
-#### PATCH
-
-``` http
-PATCH /api/emergencies
-```
-
-Updates the status of an emergency.
-
-Possible status values:
-
-``` text
-ACTIVE
-IN PROGRESS
-RESOLVED
-```
-
-### Locations
-
-``` http
-GET /api/locations
-```
-
-Returns all registered campus locations.
-
-Example response:
-
-``` json
-{
-  "success": true,
-  "locations": []
-}
-```
-
-### Resources
-
-``` http
-GET /api/resources
-```
-
-Returns available emergency resources.
-
-Example response:
-
-``` json
-{
-  "success": true,
-  "resources": []
-}
-```
-
-### Database Testing
-
-``` http
-GET /api/test-db
-```
-
-This endpoint can be used to verify that the Next.js application can
-communicate successfully with MySQL.
-
-## ⚙️ Installation
-
-### Requirements
-
-Install the following before running CampusResQ:
-
--   Node.js
--   npm
--   MySQL Server
--   Git
--   Visual Studio Code
-
-### 1. Clone the Repository
-
-``` bash
+```bash
 git clone https://github.com/anantha-bit/-CampusResQ.git
+```
+
+Move into the project directory:
+
+```bash
 cd -CampusResQ
 ```
 
-### 2. Install Dependencies
+### Step 2: Install dependencies
 
-``` bash
+```bash
 npm install
 ```
 
-### 3. Set Up MySQL
+### Step 3: Configure environment variables
 
-Start MySQL Server and open the MySQL command line:
+Create a local `.env.local` file in the project root.
 
-``` bash
-mysql -u root -p
+Use `.env.example` as a reference, and configure the variables required by the application:
+
+```dotenv
+DB_HOST=localhost
+DB_USER=your_mysql_username
+DB_PASSWORD=your_mysql_password
+DB_NAME=campusresq_db
+
+MONGODB_URI=mongodb://127.0.0.1:27017/campusresq
+
+JWT_SECRET=replace_with_a_long_random_secret
 ```
 
-Create the database:
+Replace the example values with your local configuration.
 
-``` sql
-CREATE DATABASE campusresq_db;
-```
+**Never commit `.env.local`, real database passwords, or production secrets to GitHub.**
 
-Select the database:
+### Step 4: Configure MySQL
 
-``` sql
-USE campusresq_db;
-```
+1. Start MySQL Server.
+2. Create the `campusresq_db` database.
+3. Create the required tables, relationships, constraints, views, procedures, functions, triggers, and indexes.
+4. Configure the application database credentials in `.env.local`.
 
-Create/import the required CampusResQ tables.
+The database schema and SQL setup scripts should be included in the repository's database documentation when available.
 
-### 4. Configure the Database Connection
+### Step 5: Configure MongoDB
 
-The database connection is located at:
+1. Start MongoDB Server.
+2. Ensure the MongoDB URI matches your local configuration.
+3. Use the `campusresq` database.
+4. Ensure the `incident_reports` collection and required indexes are available.
 
-``` text
-lib/db.ts
-```
+### Step 6: Start the application
 
-Example:
-
-``` typescript
-import mysql from "mysql2/promise";
-
-const pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "YOUR_MYSQL_PASSWORD",
-  database: "campusresq_db",
-});
-
-export default pool;
-```
-
-Replace:
-
-``` text
-YOUR_MYSQL_PASSWORD
-```
-
-with your local MySQL password.
-
-> **Important:** Do not commit your real database password to GitHub.
-> For production, store database credentials in environment variables.
-
-### 5. Start the Development Server
-
-``` bash
+```bash
 npm run dev
 ```
 
-Open:
+Open the application in your browser:
 
-``` text
 http://localhost:3000
-```
 
-## 🌐 Application Pages
+---
 
-  -----------------------------------------------------------------------
-  Page                    URL                     Description
-  ----------------------- ----------------------- -----------------------
-  Dashboard               `/`                     Main emergency
-                                                  monitoring dashboard
+## 11. Application Pages
 
-  Emergency Reports       `/emergency-reports`    Emergency report
-                                                  management
+The application includes the following pages:
 
-  Resources               `/resources`            Emergency resource
-                                                  management
+| Page | Purpose |
+|---|---|
+| Dashboard | Displays emergency statistics and recent reports |
+| Emergency Reports | Displays emergency records and their statuses |
+| Report Emergency | Provides the emergency reporting form |
+| Resources | Displays resource information |
+| Locations | Displays campus location information |
+| Reports | Displays emergency analytics |
+| Login | Provides user authentication |
 
-  Locations               `/locations`            Registered campus
-                                                  locations
+The availability of particular actions depends on the user's role and the implemented authorization rules.
 
-  Reports & Analytics     `/reports`              Emergency statistics
-                                                  and analytics
-  -----------------------------------------------------------------------
+---
 
-## 🖱️ Using the Application
+## 12. API Overview
 
-### Dashboard
+The application includes Next.js API routes for emergency management, authentication, locations, resources, incident logs, and MongoDB connectivity testing.
 
-Open:
+The principal routes include:
 
-``` text
-http://localhost:3000
-```
+| Endpoint | Purpose |
+|---|---|
+| `/api/auth/login` | Authenticates users |
+| `/api/emergencies` | Retrieves and creates emergency reports |
+| `/api/locations` | Provides location-related data |
+| `/api/resources` | Provides resource-related data |
+| `/api/incident-logs` | Supports incident-log operations |
+| `/api/mongo-test` | Tests MongoDB connectivity |
 
-The dashboard shows:
+Emergency status updates use the supported emergency API route with the appropriate request method and payload.
 
--   Total incidents
--   Active incidents
--   In-progress incidents
--   Resolved incidents
--   Emergency reports
--   Search and filters
+Protected endpoints require valid authentication, and emergency status changes are restricted to authorized roles.
 
-### 🚨 Report an Emergency
+---
 
-Click:
+## 13. Testing
 
-``` text
-+ Report Emergency
-```
+The following areas have been tested during development:
 
-Enter:
+- MySQL database connectivity
+- MongoDB connectivity
+- Emergency reporting
+- Emergency listing and dashboard display
+- Emergency status updates
+- Authentication and authorization
+- Invalid request validation
+- MySQL views, procedures, functions, and triggers
+- SQL transaction rollback
+- SQL DDL and DML operations
+- MongoDB indexes and aggregation
+- Application page navigation
+- MySQL and MongoDB status synchronization for tested incident records
 
--   Emergency Type
--   Priority
--   Building
--   Floor
--   Room / Location
--   Description
+These checks demonstrate the main application and database capabilities. They do not imply that every possible failure condition or production scenario has been tested.
 
-Then click:
+---
 
-``` text
-Submit Emergency
-```
+## 14. Security Considerations
 
-The system checks whether the selected location is registered before
-creating the emergency.
+- Environment-specific configuration is stored outside the source code.
+- `.env.local` is excluded through `.gitignore`.
+- Password verification uses bcrypt.
+- Authentication uses a signed JWT in an HTTP-only cookie.
+- Protected API routes perform authentication checks.
+- Role-based authorization restricts emergency status changes.
+- Request validation rejects invalid emergency fields and unsupported values.
+- Database relationships and constraints help preserve data integrity.
 
-If the location does not exist in the database, the emergency report
-will not be created.
+For production deployment, use strong secrets, secure database credentials, HTTPS, and appropriate access restrictions.
 
-### 🟠 Start Response
+---
 
-For an active emergency, the administrator can select:
+## 15. Limitations and Future Improvements
 
-``` text
-Start Response
-```
+Potential improvements include:
 
-The status changes:
+- Automated retry handling for failed MongoDB synchronization
+- More comprehensive automated tests
+- Enhanced emergency notifications
+- Live incident updates
+- Improved analytics and reporting
+- More detailed audit logs
+- Deployment configuration for a hosted environment
+- Additional monitoring and production security controls
 
-``` text
-ACTIVE → IN PROGRESS
-```
+---
 
-### 🟢 Mark Resolved
+## 16. Contributors
 
-Once the emergency has been handled, the administrator can select:
+Developed as a DBMS project using Next.js, MySQL, and MongoDB.
 
-``` text
-Mark Resolved
-```
+Repository:
 
-The status changes:
+https://github.com/anantha-bit/-CampusResQ
 
-``` text
-IN PROGRESS → RESOLVED
-```
+---
 
-Dashboard statistics are automatically updated.
+## 17. Conclusion
 
-### 📊 Reports & Analytics
+CampusResQ demonstrates how a web application can combine relational and document-oriented databases to support campus emergency reporting and response management.
 
-Navigate to:
-
-``` text
-/reports
-```
-
-The page provides:
-
--   Total incidents
--   Active incidents
--   In-progress incidents
--   Resolved incidents
--   Response overview
--   Emergency types
--   Emergency priorities
-
-### 🔎 Search and Filtering
-
-Emergency reports can be searched using:
-
-``` text
-Search emergencies...
-```
-
-Reports can be filtered by status:
-
-``` text
-All Statuses
-ACTIVE
-IN PROGRESS
-RESOLVED
-```
-
-And by priority:
-
-``` text
-All Priorities
-HIGH
-MEDIUM
-CRITICAL
-```
-
-## 🛡️ Validation
-
-CampusResQ validates emergency reports before they are created.
-
-Required fields include:
-
--   Reported user
--   Location
--   Emergency type
--   Priority
--   Description
-
-The system also verifies that the selected campus location exists in the
-database.
-
-Invalid locations are rejected.
-
-## 🔐 Security Considerations
-
-Before deploying CampusResQ to production, the following improvements
-should be implemented:
-
--   Use environment variables for database credentials
--   Implement user authentication
--   Implement role-based access control
--   Validate all API input
--   Sanitize user-provided data
--   Use HTTPS
--   Protect administrative endpoints
--   Restrict database permissions
--   Never commit passwords or API keys
--   Add proper session management
--   Add API rate limiting where required
-
-## 🚀 Future Improvements
-
-### 📱 Mobile Application
-
-Develop Android/iOS applications for students, staff, and emergency
-responders.
-
-### 🔔 Real-Time Notifications
-
-Send emergency notifications to:
-
--   Administrators
--   Security personnel
--   Students
--   Staff
--   Emergency responders
-
-### 📍 GPS Location
-
-Automatically determine the user's campus location while reporting an
-emergency.
-
-### 🗺️ Interactive Campus Map
-
-Display:
-
--   Buildings
--   Emergency locations
--   Responders
--   Emergency resources
-
-on an interactive campus map.
-
-### 👨‍🚒 Responder Assignment
-
-Allow administrators to assign specific responders to emergency
-incidents.
-
-### 📞 Emergency Hotline Integration
-
-Integrate campus emergency services and external emergency services.
-
-### 📧 Email and SMS Notifications
-
-Automatically notify relevant personnel when a critical emergency is
-reported.
-
-### 🔔 Push Notifications
-
-Provide real-time alerts through browser and mobile push notifications.
-
-### 📦 Resource Requests
-
-Allow responders to request resources such as:
-
--   First Aid Kits
--   Stretchers
--   Wheelchairs
--   Fire Extinguishers
--   Emergency Radios
-
-### 📊 Advanced Analytics
-
-Add:
-
--   Graphs
--   Charts
--   Monthly reports
--   Emergency trends
--   Response-time analysis
--   Building-wise emergency statistics
-
-### 🤖 AI Emergency Classification
-
-Future versions could automatically classify emergency descriptions into
-categories such as:
-
--   Medical
--   Fire
--   Security
--   Accident
--   Other
-
-## 🧑‍💻 Development
-
-After making changes:
-
-``` bash
-npm run dev
-```
-
-Test the application locally at:
-
-``` text
-http://localhost:3000
-```
-
-## 🌿 Git Workflow
-
-Check the current changes:
-
-``` bash
-git status
-```
-
-Add changes:
-
-``` bash
-git add .
-```
-
-Commit changes:
-
-``` bash
-git commit -m "Describe your changes"
-```
-
-Push to GitHub:
-
-``` bash
-git push
-```
-
-## 📦 Production Build
-
-Create a production build:
-
-``` bash
-npm run build
-```
-
-Start the production server:
-
-``` bash
-npm start
-```
-
-## 👨‍💻 Author
-
-**Anantha**
-
-GitHub: https://github.com/anantha-bit
-
-Project: https://github.com/anantha-bit/-CampusResQ
-
-## 📄 License
-
-This project is developed for educational and academic purposes.
+The project integrates authentication, role-based authorization, emergency lifecycle management, SQL database design, advanced SQL features, MongoDB aggregation, and a web-based dashboard into one application.
