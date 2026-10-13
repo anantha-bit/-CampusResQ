@@ -445,3 +445,26 @@ https://github.com/anantha-bit/-CampusResQ
 CampusResQ demonstrates how a web application can combine relational and document-oriented databases to support campus emergency reporting and response management.
 
 The project integrates authentication, role-based authorization, emergency lifecycle management, SQL database design, advanced SQL features, MongoDB aggregation, and a web-based dashboard into one application.
+
+
+
+---
+
+## 18. Project Documentation
+
+The following files provide detailed information about the CampusResQ database design and implementation.
+
+| Document | Description |
+|---|---|
+| [Database Schema](database/schema.sql) | MySQL table definitions, primary keys, foreign keys, and constraints |
+| [SQL Queries](database/queries.sql) | SQL queries, joins, aggregations, subqueries, and advanced database operations |
+| [ER Diagram](docs/ER_Diagram.png) | Entity-Relationship diagram using Chen notation |
+| [Relational Schema](docs/Relational_Schema.md) | Relations, attributes, keys, and relationships |
+| [Data Dictionary](docs/Data_Dictionary.md) | Column descriptions, data types, and constraints |
+| [Application Screenshots](docs/Screenshots/CampusResQ_Application_Screenshots.docx) | Screenshots of the application pages |
+
+### Documentation Overview
+
+These documents explain the relational database design, SQL implementation, relationships between entities, and application interface.
+
+The screenshots provide visual evidence of the application's pages and functionality.
