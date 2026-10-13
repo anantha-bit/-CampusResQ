@@ -10,39 +10,38 @@ type Resource = {
 };
 
 export default function ResourcesPage() {
-
-  const [resources, setResources] =
-    useState<Resource[]>([]);
-
-  const [loading, setLoading] =
-    useState(true);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   async function loadResources() {
+    setLoading(true);
+    setError("");
 
     try {
+      const response = await fetch("/api/resources", {
+        method: "GET",
+        cache: "no-store",
+        credentials: "same-origin",
+      });
 
-      setLoading(true);
+      const data = await response.json();
 
-      const response =
-        await fetch("/api/resources", {
-          cache: "no-store",
-        });
-
-      const data =
-        await response.json();
-
-      if (data.success) {
-        setResources(data.resources);
+      if (!response.ok || !data.success) {
+        setError(
+          response.status === 401
+            ? "Please log in to view campus resources."
+            : data.message || "Unable to load resources."
+        );
+        return;
       }
 
-    } catch (error) {
-
-      console.error(error);
-
+      setResources(Array.isArray(data.resources) ? data.resources : []);
+    } catch (err) {
+      console.error("Resources loading error:", err);
+      setError("Unable to connect to the server. Please try again.");
     } finally {
-
       setLoading(false);
-
     }
   }
 
@@ -50,47 +49,28 @@ export default function ResourcesPage() {
     loadResources();
   }, []);
 
-  const total =
-    resources.reduce(
-      (sum, resource) =>
-        sum + resource.quantity,
+  const total = resources.reduce(
+    (sum, resource) => sum + Number(resource.quantity || 0),
+    0
+  );
+
+  const medical = resources
+    .filter((resource) => resource.resource_type === "Medical")
+    .reduce(
+      (sum, resource) => sum + Number(resource.quantity || 0),
       0
     );
 
-  const medical =
-    resources
-      .filter(
-        (r) =>
-          r.resource_type ===
-          "Medical"
-      )
-      .reduce(
-        (sum, r) =>
-          sum + r.quantity,
-        0
-      );
-
-  const fire =
-    resources
-      .filter(
-        (r) =>
-          r.resource_type ===
-          "Fire Safety"
-      )
-      .reduce(
-        (sum, r) =>
-          sum + r.quantity,
-        0
-      );
+  const fire = resources
+    .filter((resource) => resource.resource_type === "Fire Safety")
+    .reduce(
+      (sum, resource) => sum + Number(resource.quantity || 0),
+      0
+    );
 
   return (
-
     <div className="page">
-
-      {/* SIDEBAR */}
-
       <aside className="sidebar">
-
         <div className="logo">
           Campus<span>ResQ</span>
         </div>
@@ -100,245 +80,124 @@ export default function ResourcesPage() {
         </div>
 
         <nav>
-
-          <a href="/">
-            Dashboard
-          </a>
-
-          <a href="/emergency-reports">
-            Emergency Reports
-          </a>
-
-          <a
-            href="/resources"
-            className="selected"
-          >
-            Resources
-          </a>
-
-          <a href="/locations">
-            Locations
-          </a>
-
-          <a href="/reports">
-            Reports & Analytics
-          </a>
-
+          <a href="/">Dashboard</a>
+          <a href="/emergency-reports">Emergency Reports</a>
+          <a href="/resources" className="selected">Resources</a>
+          <a href="/locations">Locations</a>
+          <a href="/reports">Reports &amp; Analytics</a>
         </nav>
 
         <div className="hotline">
-
-          <strong>
-            Emergency Hotline
-          </strong>
-
+          <strong>Emergency Hotline</strong>
           <div>112</div>
-
-          <span>
-            For immediate assistance
-          </span>
-
+          <span>For immediate assistance</span>
         </div>
-
       </aside>
 
-
-      {/* MAIN */}
-
       <main>
-
-        <h1>
-          Resources
-        </h1>
+        <h1>Resources</h1>
 
         <p className="subtitle">
-          View and manage emergency response
-          resources available on campus.
+          View and manage emergency response resources available on campus.
         </p>
 
-
-        {/* STATISTICS */}
-
         <div className="stats">
-
           <div className="card">
-
-            <span>
-              Total Resources
-            </span>
-
-            <strong>
-              {total}
-            </strong>
-
-            <small>
-              Available units
-            </small>
-
+            <span>Total Resources</span>
+            <strong>{total}</strong>
+            <small>Available units</small>
           </div>
 
-
           <div className="card">
-
-            <span>
-              Medical
-            </span>
-
-            <strong className="green">
-              {medical}
-            </strong>
-
-            <small className="green">
-              Medical resources
-            </small>
-
+            <span>Medical</span>
+            <strong className="green">{medical}</strong>
+            <small className="green">Medical resources</small>
           </div>
 
-
           <div className="card">
-
-            <span>
-              Fire Safety
-            </span>
-
-            <strong className="red">
-              {fire}
-            </strong>
-
-            <small className="red">
-              Fire safety resources
-            </small>
-
+            <span>Fire Safety</span>
+            <strong className="red">{fire}</strong>
+            <small className="red">Fire safety resources</small>
           </div>
-
         </div>
 
-
-        {/* RESOURCE LIST */}
-
         <section className="resources">
-
           <div className="resource-header">
-
             <div>
-
-              <h2>
-                Available Resources
-              </h2>
-
+              <h2>Available Resources</h2>
               <p>
-                Resources currently stored
-                in the campus emergency system.
+                Resources currently stored in the campus emergency system.
               </p>
-
             </div>
 
-            <button
-              onClick={loadResources}
-            >
-              ↻ Refresh
+            <button onClick={loadResources} disabled={loading}>
+              {loading ? "Loading..." : "↻ Refresh"}
             </button>
-
           </div>
 
-
           {loading ? (
-
-            <div className="message">
-              Loading resources...
+            <div className="message">Loading resources...</div>
+          ) : error ? (
+            <div className="message error">
+              <p>{error}</p>
+              <button onClick={loadResources}>Try Again</button>
             </div>
-
+          ) : resources.length === 0 ? (
+            <div className="message">
+              No resources were found in the database.
+            </div>
           ) : (
-
             <div className="resource-grid">
+              {resources.map((resource) => (
+                <div
+                  className="resource-card"
+                  key={resource.resource_id}
+                >
+                  <div className="resource-top">
+                    <div>
+                      <h3>{resource.resource_name}</h3>
 
-              {resources.map(
-                (resource) => (
-
-                  <div
-                    className="resource-card"
-                    key={
-                      resource.resource_id
-                    }
-                  >
-
-                    <div className="resource-top">
-
-                      <div>
-
-                        <h3>
-                          {resource.resource_name}
-                        </h3>
-
-                        <span
-                          className={
-                            resource.resource_type ===
-                            "Medical"
-                              ? "type medical"
-                              : resource.resource_type ===
-                                "Fire Safety"
-                              ? "type fire"
-                              : "type communication"
-                          }
-                        >
-                          {resource.resource_type}
-                        </span>
-
-                      </div>
-
-                      <div className="quantity">
-
-                        <strong>
-                          {resource.quantity}
-                        </strong>
-
-                        <small>
-                          UNITS
-                        </small>
-
-                      </div>
-
+                      <span
+                        className={
+                          resource.resource_type === "Medical"
+                            ? "type medical"
+                            : resource.resource_type === "Fire Safety"
+                            ? "type fire"
+                            : "type communication"
+                        }
+                      >
+                        {resource.resource_type}
+                      </span>
                     </div>
 
-
-                    <div className="bar">
-
-                      <div
-                        style={{
-                          width: `${Math.min(
-                            resource.quantity *
-                              5.8,
-                            100
-                          )}%`,
-                        }}
-                      />
-
+                    <div className="quantity">
+                      <strong>{resource.quantity}</strong>
+                      <small>UNITS</small>
                     </div>
-
-
-                    <div className="resource-id">
-
-                      Resource ID: #
-                      {resource.resource_id}
-
-                    </div>
-
                   </div>
 
-                )
-              )}
+                  <div className="bar">
+                    <div
+                      style={{
+                        width: `${Math.min(
+                          Math.max(Number(resource.quantity) * 5.8, 0),
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
 
+                  <div className="resource-id">
+                    Resource ID: #{resource.resource_id}
+                  </div>
+                </div>
+              ))}
             </div>
-
           )}
-
         </section>
-
       </main>
 
-
       <style jsx>{`
-
         .page {
           min-height: 100vh;
           background: #f1f5f9;
@@ -422,8 +281,7 @@ export default function ResourcesPage() {
 
         .stats {
           display: grid;
-          grid-template-columns:
-            repeat(3, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 18px;
           margin-bottom: 35px;
         }
@@ -469,6 +327,7 @@ export default function ResourcesPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 15px;
         }
 
         .resource-header h2 {
@@ -479,7 +338,8 @@ export default function ResourcesPage() {
           color: #58718f;
         }
 
-        .resource-header button {
+        .resource-header button,
+        .message button {
           padding: 11px 18px;
           background: white;
           border: 1px solid #94a3b8;
@@ -488,12 +348,16 @@ export default function ResourcesPage() {
           cursor: pointer;
         }
 
+        button:disabled {
+          cursor: not-allowed;
+          opacity: 0.6;
+        }
+
         .resource-grid {
           border-top: 1px solid #cbd5e1;
           padding: 25px;
           display: grid;
-          grid-template-columns:
-            repeat(3, 1fr);
+          grid-template-columns: repeat(3, 1fr);
           gap: 20px;
         }
 
@@ -501,6 +365,7 @@ export default function ResourcesPage() {
           border: 1px solid #94a3b8;
           border-radius: 12px;
           padding: 22px;
+          background: white;
         }
 
         .resource-top {
@@ -515,6 +380,7 @@ export default function ResourcesPage() {
         }
 
         .type {
+          display: inline-block;
           padding: 6px 12px;
           border-radius: 20px;
           font-size: 12px;
@@ -541,6 +407,7 @@ export default function ResourcesPage() {
           color: white;
           border-radius: 9px;
           width: 68px;
+          min-width: 68px;
           height: 78px;
           display: flex;
           flex-direction: column;
@@ -583,37 +450,45 @@ export default function ResourcesPage() {
           color: #64748b;
         }
 
-        @media(max-width:900px) {
+        .error {
+          color: #b91c1c;
+          background: #fff1f2;
+          border-top: 1px solid #fecaca;
+        }
 
+        @media (max-width: 1100px) {
+          .resource-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 900px) {
           .stats {
             grid-template-columns: 1fr;
           }
-
-          .resource-grid {
-            grid-template-columns: 1fr 1fr;
-          }
-
         }
 
-        @media(max-width:650px) {
-
+        @media (max-width: 650px) {
           .sidebar {
             position: static;
-            width: 100%;
+            width: auto;
           }
 
           main {
             margin-left: 0;
+            padding: 25px 5%;
+          }
+
+          .resource-header {
+            align-items: flex-start;
+            flex-direction: column;
           }
 
           .resource-grid {
             grid-template-columns: 1fr;
           }
-
         }
-
       `}</style>
-
     </div>
   );
 }

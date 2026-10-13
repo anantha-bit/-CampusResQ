@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Emergency = {
   emergency_id: number;
@@ -9,7 +9,7 @@ type Emergency = {
   status: string;
   description: string;
   building: string;
-  floor: string;
+  floor: string | number;
   room: string;
   created_at: string;
 };
@@ -19,35 +19,56 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function loadEmergencies() {
+  const loadEmergencies = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch("/api/emergencies");
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch emergencies");
-      }
+      const response = await fetch("/api/emergencies", {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
 
       const data = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.message || "Failed to fetch emergencies");
+      if (response.status === 401) {
+        setEmergencies([]);
+        setError("Please log in to view Reports & Analytics.");
+        return;
       }
 
-      setEmergencies(data.emergencies || []);
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Failed to fetch emergency records."
+        );
+      }
+
+      // Support both the current and older API response formats.
+      const records = Array.isArray(data.data)
+        ? data.data
+        : Array.isArray(data.emergencies)
+          ? data.emergencies
+          : [];
+
+      setEmergencies(records);
     } catch (err) {
-      console.error(err);
-      setError("Failed to load analytics data.");
+      console.error("Reports loading error:", err);
+      setEmergencies([]);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load analytics data."
+      );
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    loadEmergencies();
-  }, []);
+    void loadEmergencies();
+  }, [loadEmergencies]);
 
   const statistics = useMemo(() => {
     const total = emergencies.length;
@@ -76,8 +97,9 @@ export default function ReportsPage() {
     const stats: Record<string, number> = {};
 
     emergencies.forEach((item) => {
-      stats[item.emergency_type] =
-        (stats[item.emergency_type] || 0) + 1;
+      const type = item.emergency_type || "Unknown";
+
+      stats[type] = (stats[type] || 0) + 1;
     });
 
     return stats;
@@ -87,8 +109,9 @@ export default function ReportsPage() {
     const stats: Record<string, number> = {};
 
     emergencies.forEach((item) => {
-      stats[item.priority] =
-        (stats[item.priority] || 0) + 1;
+      const priority = item.priority || "Unknown";
+
+      stats[priority] = (stats[priority] || 0) + 1;
     });
 
     return stats;
@@ -98,29 +121,46 @@ export default function ReportsPage() {
     const stats: Record<string, number> = {};
 
     emergencies.forEach((item) => {
-      const location = `${item.building} • ${item.room}`;
+      const building = item.building || "Unknown building";
+      const room = item.room || "Unknown room";
+      const location = `${building} • ${room}`;
 
-      stats[location] =
-        (stats[location] || 0) + 1;
+      stats[location] = (stats[location] || 0) + 1;
     });
 
     return stats;
   }, [emergencies]);
 
   function percentage(value: number) {
-    if (statistics.total === 0) return 0;
+    if (statistics.total === 0) {
+      return 0;
+    }
 
-    return Math.round(
-      (value / statistics.total) * 100
-    );
+    return Math.round((value / statistics.total) * 100);
+  }
+
+  function displayStatus(status: string) {
+    return String(status || "UNKNOWN").replace(/_/g, " ");
+  }
+
+  function getStatusClass(status: string) {
+    switch (status) {
+      case "ACTIVE":
+        return "status-active";
+      case "IN_PROGRESS":
+        return "status-progress";
+      case "RESOLVED":
+        return "status-resolved";
+      default:
+        return "status-other";
+    }
   }
 
   return (
     <div className="reports-page">
-      {/* Header */}
       <div className="page-header">
         <div>
-          <h1>Reports & Analytics</h1>
+          <h1>Reports &amp; Analytics</h1>
           <p>
             Analyze campus emergency response activities and incidents.
           </p>
@@ -128,86 +168,74 @@ export default function ReportsPage() {
 
         <button
           className="refresh-button"
-          onClick={loadEmergencies}
+          onClick={() => void loadEmergencies()}
+          disabled={loading}
         >
-          ↻ Refresh
+          {loading ? "Loading..." : "↻ Refresh"}
         </button>
       </div>
 
-      {/* Error */}
       {error && (
-        <div className="error-message">
-          {error}
+        <div className="error-message" role="alert">
+          <p>{error}</p>
+
+          {error.toLowerCase().includes("log in") && (
+            <a href="/login">Go to Login</a>
+          )}
+
+          <button
+            className="retry-button"
+            onClick={() => void loadEmergencies()}
+          >
+            Try Again
+          </button>
         </div>
       )}
 
-      {/* Loading */}
       {loading ? (
-        <div className="loading">
-          Loading analytics...
-        </div>
+        <div className="loading">Loading analytics...</div>
       ) : (
         <>
-          {/* Summary Cards */}
           <div className="summary-grid">
             <div className="summary-card">
-              <div className="card-title">
-                Total Incidents
-              </div>
-
-              <div className="card-number">
-                {statistics.total}
-              </div>
-
+              <div className="card-title">Total Incidents</div>
+              <div className="card-number">{statistics.total}</div>
               <div className="card-description">
                 All recorded emergencies
               </div>
             </div>
 
             <div className="summary-card">
-              <div className="card-title">
-                Active
-              </div>
-
+              <div className="card-title">Active</div>
               <div className="card-number red">
                 {statistics.active}
               </div>
-
               <div className="card-description red-text">
                 Requires attention
               </div>
             </div>
 
             <div className="summary-card">
-              <div className="card-title">
-                In Progress
-              </div>
-
+              <div className="card-title">In Progress</div>
               <div className="card-number orange">
                 {statistics.inProgress}
               </div>
-
               <div className="card-description orange-text">
                 Response teams assigned
               </div>
             </div>
 
             <div className="summary-card">
-              <div className="card-title">
-                Resolved
-              </div>
-
+              <div className="card-title">Resolved</div>
               <div className="card-number green">
                 {statistics.resolved}
               </div>
-
               <div className="card-description green-text">
                 Successfully handled
               </div>
             </div>
           </div>
 
-          {/* Response Overview */}
           <div className="section-card">
             <div className="section-header">
               <div>
@@ -222,90 +250,71 @@ export default function ReportsPage() {
               <div className="overview-item">
                 <div className="overview-top">
                   <span>Active</span>
-                  <strong>
-                    {statistics.active}
-                  </strong>
+                  <strong>{statistics.active}</strong>
                 </div>
 
                 <div className="progress">
                   <div
                     className="progress-red"
                     style={{
-                      width: `${percentage(
-                        statistics.active
-                      )}%`,
+                      width: `${percentage(statistics.active)}%`,
                     }}
                   />
                 </div>
 
                 <small>
-                  {percentage(statistics.active)}%
-                  of total incidents
+                  {percentage(statistics.active)}% of total incidents
                 </small>
               </div>
 
               <div className="overview-item">
                 <div className="overview-top">
                   <span>In Progress</span>
-                  <strong>
-                    {statistics.inProgress}
-                  </strong>
+                  <strong>{statistics.inProgress}</strong>
                 </div>
 
                 <div className="progress">
                   <div
                     className="progress-orange"
                     style={{
-                      width: `${percentage(
-                        statistics.inProgress
-                      )}%`,
+                      width: `${percentage(statistics.inProgress)}%`,
                     }}
                   />
                 </div>
 
                 <small>
-                  {percentage(statistics.inProgress)}%
-                  of total incidents
+                  {percentage(statistics.inProgress)}% of total incidents
                 </small>
               </div>
 
               <div className="overview-item">
                 <div className="overview-top">
                   <span>Resolved</span>
-                  <strong>
-                    {statistics.resolved}
-                  </strong>
+                  <strong>{statistics.resolved}</strong>
                 </div>
 
                 <div className="progress">
                   <div
                     className="progress-green"
                     style={{
-                      width: `${percentage(
-                        statistics.resolved
-                      )}%`,
+                      width: `${percentage(statistics.resolved)}%`,
                     }}
                   />
                 </div>
 
                 <small>
-                  {percentage(statistics.resolved)}%
-                  of total incidents
+                  {percentage(statistics.resolved)}% of total incidents
                 </small>
               </div>
             </div>
           </div>
 
-          {/* Type + Priority */}
           <div className="two-column">
-            {/* Emergency Types */}
             <div className="section-card">
               <div className="section-header">
                 <div>
                   <h2>Emergencies by Type</h2>
-                  <p>
-                    Distribution of emergency categories.
-                  </p>
+                  <p>Distribution of emergency categories.</p>
                 </div>
               </div>
 
@@ -315,35 +324,25 @@ export default function ReportsPage() {
                     No emergency data available.
                   </div>
                 ) : (
-                  Object.entries(typeStats).map(
-                    ([type, count]) => (
-                      <div
-                        className="stat-row"
-                        key={type}
-                      >
-                        <div className="stat-label">
-                          <span className="dot green-dot" />
-                          <span>{type}</span>
-                        </div>
-
-                        <div className="stat-value">
-                          {count}
-                        </div>
+                  Object.entries(typeStats).map(([type, count]) => (
+                    <div className="stat-row" key={type}>
+                      <div className="stat-label">
+                        <span className="dot green-dot" />
+                        <span>{type}</span>
                       </div>
-                    )
-                  )
+
+                      <div className="stat-value">{count}</div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
 
-            {/* Priority */}
             <div className="section-card">
               <div className="section-header">
                 <div>
                   <h2>Emergencies by Priority</h2>
-                  <p>
-                    Incidents grouped by priority level.
-                  </p>
+                  <p>Incidents grouped by priority level.</p>
                 </div>
               </div>
 
@@ -355,27 +354,22 @@ export default function ReportsPage() {
                 ) : (
                   Object.entries(priorityStats).map(
                     ([priority, count]) => (
-                      <div
-                        className="stat-row"
-                        key={priority}
-                      >
+                      <div className="stat-row" key={priority}>
                         <div className="stat-label">
                           <span
                             className={`dot ${
                               priority === "CRITICAL"
                                 ? "red-dot"
                                 : priority === "HIGH"
-                                ? "orange-dot"
-                                : "blue-dot"
+                                  ? "orange-dot"
+                                  : "blue-dot"
                             }`}
                           />
 
                           <span>{priority}</span>
                         </div>
 
-                        <div className="stat-value">
-                          {count}
-                        </div>
+                        <div className="stat-value">{count}</div>
                       </div>
                     )
                   )
@@ -384,7 +378,6 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Location Analysis */}
           <div className="section-card">
             <div className="section-header">
               <div>
@@ -409,22 +402,15 @@ export default function ReportsPage() {
                 Object.entries(locationStats)
                   .sort((a, b) => b[1] - a[1])
                   .map(([location, count]) => (
-                    <div
-                      className="table-row"
-                      key={location}
-                    >
+                    <div className="table-row" key={location}>
                       <span>{location}</span>
-
-                      <strong>
-                        {count}
-                      </strong>
+                      <strong>{count}</strong>
                     </div>
                   ))
               )}
             </div>
           </div>
 
-          {/* Recent Incidents */}
           <div className="section-card">
             <div className="section-header">
               <div>
@@ -436,50 +422,38 @@ export default function ReportsPage() {
             </div>
 
             <div className="recent-list">
-              {emergencies.slice(0, 5).map(
-                (incident) => (
-                  <div
-                    className="recent-item"
-                    key={incident.emergency_id}
-                  >
-                    <div>
-                      <div className="recent-title">
-                        {incident.emergency_type}
+              {emergencies.slice(0, 5).map((incident) => (
+                <div
+                  className="recent-item"
+                  key={incident.emergency_id}
+                >
+                  <div>
+                    <div className="recent-title">
+                      {incident.emergency_type || "Emergency"}
 
-                        <span
-                          className={`status ${
-                            incident.status === "ACTIVE"
-                              ? "status-active"
-                              : incident.status ===
-                                "IN_PROGRESS"
-                              ? "status-progress"
-                              : "status-resolved"
-                          }`}
-                        >
-                          {incident.status.replace(
-                            "_",
-                            " "
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="recent-location">
-                        {incident.building} •{" "}
-                        {incident.room}
-                      </div>
+                      <span
+                        className={`status ${getStatusClass(
+                          incident.status
+                        )}`}
+                      >
+                        {displayStatus(incident.status)}
+                      </span>
                     </div>
 
-                    <div className="recent-priority">
-                      {incident.priority}
+                    <div className="recent-location">
+                      {incident.building || "Unknown building"} •{" "}
+                      {incident.room || "Unknown room"}
                     </div>
                   </div>
-                )
-              )}
+
+                  <div className="recent-priority">
+                    {incident.priority || "UNKNOWN"}
+                  </div>
+                </div>
+              ))}
 
               {emergencies.length === 0 && (
-                <div className="empty">
-                  No incidents recorded.
-                </div>
+                <div className="empty">No incidents recorded.</div>
               )}
             </div>
           </div>
@@ -498,6 +472,7 @@ export default function ReportsPage() {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
+          gap: 20px;
           margin-bottom: 30px;
         }
 
@@ -513,7 +488,8 @@ export default function ReportsPage() {
           font-size: 17px;
         }
 
-        .refresh-button {
+        .refresh-button,
+        .retry-button {
           background: white;
           border: 1px solid #94a3b8;
           border-radius: 9px;
@@ -523,24 +499,24 @@ export default function ReportsPage() {
           cursor: pointer;
         }
 
-        .refresh-button:hover {
-          background: #f8fafc;
+        .refresh-button:disabled {
+          cursor: wait;
+          opacity: 0.6;
         }
 
         .summary-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 20px;
           margin-bottom: 30px;
         }
 
         .summary-card {
           background: white;
-          border: 1px solid #94a3b8;
+          border: 1px solid #cbd5e1;
           border-radius: 14px;
           padding: 24px;
-          box-shadow: 0 2px 5px
-            rgba(15, 23, 42, 0.06);
+          box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06);
         }
 
         .card-title {
@@ -554,15 +530,18 @@ export default function ReportsPage() {
           font-weight: 700;
         }
 
-        .card-number.red {
+        .card-number.red,
+        .red-text {
           color: #ef1111;
         }
 
-        .card-number.orange {
+        .card-number.orange,
+        .orange-text {
           color: #e87500;
         }
 
-        .card-number.green {
+        .card-number.green,
+        .green-text {
           color: #00a878;
         }
 
@@ -572,26 +551,13 @@ export default function ReportsPage() {
           font-size: 14px;
         }
 
-        .red-text {
-          color: #ef1111;
-        }
-
-        .orange-text {
-          color: #e87500;
-        }
-
-        .green-text {
-          color: #00a878;
-        }
-
         .section-card {
           background: white;
-          border: 1px solid #94a3b8;
+          border: 1px solid #cbd5e1;
           border-radius: 14px;
           margin-bottom: 25px;
           overflow: hidden;
-          box-shadow: 0 2px 5px
-            rgba(15, 23, 42, 0.05);
+          box-shadow: 0 2px 5px rgba(15, 23, 42, 0.05);
         }
 
         .section-header {
@@ -613,7 +579,7 @@ export default function ReportsPage() {
           border-top: 1px solid #cbd5e1;
           padding: 25px 28px;
           display: grid;
-          grid-template-columns: repeat(3, 1fr);
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 30px;
         }
 
@@ -666,7 +632,7 @@ export default function ReportsPage() {
 
         .two-column {
           display: grid;
-          grid-template-columns: 1fr 1fr;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           gap: 25px;
         }
 
@@ -674,7 +640,9 @@ export default function ReportsPage() {
           margin-bottom: 25px;
         }
 
-        .stats-list {
+        .stats-list,
+        .location-table,
+        .recent-list {
           border-top: 1px solid #cbd5e1;
         }
 
@@ -721,14 +689,11 @@ export default function ReportsPage() {
           background: #3b82f6;
         }
 
-        .location-table {
-          border-top: 1px solid #cbd5e1;
-        }
-
         .table-header,
         .table-row {
           display: grid;
           grid-template-columns: 1fr 150px;
+          gap: 12px;
           padding: 17px 28px;
         }
 
@@ -747,14 +712,11 @@ export default function ReportsPage() {
           text-align: right;
         }
 
-        .recent-list {
-          border-top: 1px solid #cbd5e1;
-        }
-
         .recent-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 16px;
           padding: 20px 28px;
           border-bottom: 1px solid #e2e8f0;
         }
@@ -764,6 +726,7 @@ export default function ReportsPage() {
           display: flex;
           align-items: center;
           gap: 10px;
+          flex-wrap: wrap;
         }
 
         .recent-location {
@@ -800,12 +763,32 @@ export default function ReportsPage() {
           background: #d1fae5;
         }
 
+        .status-other {
+          color: #475569;
+          background: #e2e8f0;
+        }
+
         .error-message {
           background: #fff1f2;
-          color: #dc2626;
+          color: #b42318;
           padding: 15px;
           border-radius: 9px;
           margin-bottom: 25px;
+        }
+
+        .error-message p {
+          margin-top: 0;
+        }
+
+        .error-message a {
+          display: inline-block;
+          margin: 0 12px 12px 0;
+          color: #067647;
+          font-weight: 700;
+        }
+
+        .retry-button {
+          display: block;
         }
 
         .loading,
@@ -817,7 +800,7 @@ export default function ReportsPage() {
 
         @media (max-width: 1000px) {
           .summary-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
           }
 
           .overview-grid {
@@ -840,7 +823,11 @@ export default function ReportsPage() {
 
           .page-header {
             flex-direction: column;
-            gap: 15px;
+          }
+
+          .recent-item {
+            align-items: flex-start;
+            flex-direction: column;
           }
         }
       `}</style>
